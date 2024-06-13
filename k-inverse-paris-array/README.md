@@ -1,5 +1,3 @@
-Certainly! Here is the explanation in Markdown format:
-
 # Explanation of K Inverse Pairs Array
 
 An inverse pair in an array is a pair of indices $(i, j)$ such that $i < j$ and $A[i] > A[j]$. For example, in the array $[3, 1, 2]$, the inverse pairs are $(3, 1)$ and $(3, 2)$.
