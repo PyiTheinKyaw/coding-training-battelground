@@ -16,9 +16,7 @@ To solve this problem, we use dynamic programming. Let's define $dp[n][k]$ as th
 2. **Transition**:
    - When we add the number $i$ (from $1$ to $n$) to an array of length $n-1$, we need to consider all possible positions where $i$ can be inserted. Inserting $i$ at position $j$ will create $j$ inverse pairs (since $i$ will be greater than all the elements to its left).
    - Therefore, the recurrence relation is:
-     $$
-     dp[n][k] = \sum_{j=0}^{\min(k, n-1)} dp[n-1][k-j]
-     $$
+     $$dp[n][k] = \sum_{j=0}^{\min(k, n-1)} dp[n-1][k-j]$$
    - This sum can be computed efficiently using a sliding window sum to avoid recomputation.
 
 ## Pseudo Code
