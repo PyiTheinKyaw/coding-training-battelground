@@ -44,21 +44,31 @@ function kInversePairs(n, k)
 To optimize the above pseudo code by using a sliding window sum:
 
 ```pseudo
-function kInversePairs(n, k)
-    if k == 0 then return 1
-    if k > n * (n-1) / 2 then return 0
+function kInversePairs(n: integer, k: integer) -> integer:
+    MOD_VALUE = 1000000007  // Define the modulus value
 
-    dp = array of size (n+1) x (k+1) initialized to 0
+    // Base cases
+    if k == 0 then return 1
+    if k > n * (n - 1) / 2 then return 0
+
+    // Initialize the dp array
+    dp = array of size (n + 1) x (k + 1) initialized to 0
     dp[0][0] = 1
 
-    for i from 1 to n
-        for j from 0 to k
-            if j == 0
-                dp[i][j] = dp[i-1][j]
-            else
-                dp[i][j] = dp[i][j-1] + dp[i-1][j]
-                if j >= i
-                    dp[i][j] = dp[i][j] - dp[i-1][j-i]
+    // Fill the dp array
+    for i from 1 to n:
+        prefix_sum = array of size (k + 1) initialized to 0
+        prefix_sum[0] = dp[i - 1][0]
+        for j from 1 to k:
+            prefix_sum[j] = (prefix_sum[j - 1] + dp[i - 1][j]) % MOD_VALUE
+
+        for j from 0 to k:
+            if j == 0:
+                dp[i][j] = dp[i - 1][j]
+            else:
+                dp[i][j] = prefix_sum[j]
+                if j >= i:
+                    dp[i][j] = (dp[i][j] - prefix_sum[j - i] + MOD_VALUE) % MOD_VALUE
 
     return dp[n][k]
 ```

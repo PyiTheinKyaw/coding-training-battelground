@@ -1,4 +1,4 @@
-pub fn k_inverse_pairs(n: i32, k: i32) -> i32 {
+pub fn k_inverse_pairs_v3(n: i32, k: i32) -> i32 {
     const MOD_VALUE: i32 = 1000000007;
 
     if k == 0 { return 1 } // return if it's base case
@@ -6,63 +6,34 @@ pub fn k_inverse_pairs(n: i32, k: i32) -> i32 {
     if !(1 <= n && n <= 1000) { return 0 }
     if !(0 <= k && n <= 1000) { return 0 }
 
-    // Init n+1 x k+1 size 2D array with zero.
-    let mut dp: Vec<Vec<i32>> = 
-        vec![vec![0; k.abs() as usize +1]; n.abs() as usize +1];
-
-    // Base Case
+    let mut dp: Vec<Vec<i32>> = vec![vec![0; k.abs() as usize +1]; n.abs() as usize +1];
     dp[0][0] = 1;
 
+    // Generating inverse pair depend on n-size.
     for i in 1..=n.abs() as usize {
-        for j in 0..=k.abs() as usize {
-            if j == 0 { dp[i][j] = 1 } // Base Case
-            else if i == 1 { dp[i][j] = 0 }
-            else {
-                dp[i][j] = 0;
 
-                for m in 0..=std::cmp::min(j, i-1) {
-                    dp[i][j] += dp[i-1][j-m];
-                    dp[i][j] %= MOD_VALUE;
+        let mut prefix_sum: Vec<i32> = vec![0; k.abs() as usize + 1];
+        prefix_sum[0] = dp[i - 1][0]; // Get base case before loop k.
+
+        for j in  1..=k.abs() as usize {
+            prefix_sum[j] = (prefix_sum[j - 1] + dp[i-1][j]) % MOD_VALUE;
+        }
+
+
+        for j in 0..=k.abs() as usize {
+            if j == 0 {dp[i][j] = dp[i-1][j]}
+
+            else {
+                dp[i][j] = prefix_sum[j];
+                if j >= i {
+                    dp[i][j] = (dp[i][j] - prefix_sum[j - i] + MOD_VALUE) % MOD_VALUE;
                 }
             }
         }
     }
-    
+
     dp[n as usize][k as usize]
 
-}
-
-pub fn k_inverse_pairs_v2_slide_window(n: i32, k: i32) -> i32 {
-    const MOD_VALUE: i32 = 1000000007;
-
-    let mut dp:Vec<i32> = vec![0; k.abs() as usize + 1];
-
-    dp[0] = 1;
-
-    for i in 1..=n.abs() as usize {
-        let mut perfix_sum: Vec<i32> = vec![0];
-        let mut total = 0;
-
-        for j in 0..=k.abs() as usize {
-            
-            total += dp[j];
-            total %= MOD_VALUE;
-
-            perfix_sum.push(total);
-        }
-
-        println!("{:?}", perfix_sum);
-
-        for j in 0..=k.abs() as usize {
-
-            let upper_bound = std::cmp::max(0, j as i32 - i as i32 + 1);
-            let lower_bound = std::cmp::min(j + 1, k.abs() as usize + 1);
-
-            dp[j] = perfix_sum[lower_bound] - perfix_sum[upper_bound.abs() as usize];
-        }
-    }
-
-    dp[k.abs() as usize]
 }
 
 fn main() {
@@ -72,9 +43,29 @@ fn main() {
     println!("n {:?}", n);
     println!("k {:?}", k);
 
-    let result = k_inverse_pairs(n, k);
+    let result = k_inverse_pairs_v3(n, k);
 
     println!("Inversed Pairs Count {:?}", result);
-    println!("Inversed Pairs Count {:?}", k_inverse_pairs_v2_slide_window(n, k));
+    // println!("Inversed Pairs Count {:?}", k_inverse_pairs_v2_slide_window(n, k));
 }
 
+pub fn k_inverse_pairs_Efficient_code(n: i32, k: i32) -> i32 {
+    let n = n as usize;
+    let k = k as usize;
+    let mut dp:[[i32; 1001]; 1002] = [[0; 1001]; 1002];
+    dp[0][0] = 1;
+    let md = 1000000007i64;
+    for i in 1..=n{
+        let l = (i *(i-1)/2).min(k);
+        let min = ( (k+n) as i32- (n*n) as i32).max(0) as usize;
+        let mut val = 0i64;
+        for j in min ..= l{
+            val += dp[i-1][j] as i64;
+            if j >=i{
+                val -= dp[i-1][j-i] as i64;
+            }
+            dp[i][j] = (val % md) as i32;
+        }
+    }
+    return dp[n][k];
+}
