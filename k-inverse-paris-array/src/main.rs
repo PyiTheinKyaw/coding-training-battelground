@@ -37,8 +37,8 @@ pub fn k_inverse_pairs_v3(n: i32, k: i32) -> i32 {
 }
 
 fn main() {
-    let n: i32 = 1000;
-    let k: i32 = 1000;
+    let n: i32 = 3;
+    let k: i32 = 1;
 
     println!("n {:?}", n);
     println!("k {:?}", k);
