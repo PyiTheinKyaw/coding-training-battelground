@@ -1,0 +1,1 @@
+/home/jay/workspace/leetcode/01_leetcode47/binary-search/search-insert-position/target/debug/search-insert-position: /home/jay/workspace/leetcode/01_leetcode47/binary-search/search-insert-position/src/main.rs
