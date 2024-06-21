@@ -1,0 +1,1 @@
+/home/jay/workspace/leetcode/01_leetcode47/binary-search/find-smallest-letter/target/debug/find-smallest-letter: /home/jay/workspace/leetcode/01_leetcode47/binary-search/find-smallest-letter/src/main.rs
