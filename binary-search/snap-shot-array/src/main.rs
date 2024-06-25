@@ -1,8 +1,8 @@
 use std::collections::HashMap;
+use std::cmp::Ordering;
 
 #[derive(Debug)]
 struct SnapshotArray {
-    size: usize,
     snap_indicator: usize,
     state: HashMap<usize, Snapshot>,
     history: HashMap<usize, usize>,
@@ -11,91 +11,72 @@ struct SnapshotArray {
 #[derive(Debug)]
 struct Snapshot {
     local_snap_bar: usize,
-    cache_size: usize,
     cache: Vec<(usize, i32)>,
 }
 
-trait CustomMinHeap {
-    fn get_left_child(index: usize) -> usize { (2 * index) + 1 }
-    fn get_right_child(index: usize) -> usize { (2 * index) + 2 }
-    fn get_parent(index: usize) -> usize { (index - 1) + 2 }
-
-    fn heapify_up(&mut self, index: usize);
-    fn sync(&mut self);
-    fn swap(&mut self, index_a: usize, index_b: usize);
-
-    fn has_left(&self, index: usize) -> bool;
-    fn has_right(&self, index: usize) -> bool;
-    
-}
-
-impl CustomMinHeap for Snapshot {
+impl Snapshot {
     fn sync(&mut self) {
-        if self.cache_size != self.local_snap_bar {
-            self.local_snap_bar += 1;
-            self.heapify_up(self.local_snap_bar - 1);
-        }
+        self.local_snap_bar += 1;
     }
 
-    fn heapify_up(&mut self, index: usize) {
-        if index != 0 {
-            let parent = Self::get_parent(index);
-            if self.cache[parent].0 < self.cache[index].0 {
-                self.swap(parent, index);
-                
-                self.heapify_up(parent);
+    fn binary_search(&self, snap_id: usize) -> i32 {
+    
+        let mut left = 0;
+        let mut right = self.cache.len();
+
+        while left < right {
+            let mid = left + (right - left) / 2;
+
+            match self.cache[mid].0.cmp(&snap_id) {
+                Ordering::Equal => { return self.cache[mid].1 },
+                Ordering::Greater => right = mid ,
+                Ordering::Less => left = mid + 1,
             }
-        }
-    }
+        }      
 
-    fn swap(&mut self, index_a: usize, index_b: usize) {
-        let temp = self.cache[index_a];
-        self.cache[index_a] = self.cache[index_b];
-        self.cache[index_b] = temp;
-    }
-    
-    fn has_left(&self, index: usize) -> bool {
-        Self::get_left_child(index) < self.local_snap_bar
-    }
-    
-    fn has_right(&self, index: usize) -> bool {
-        Self::get_right_child(index) < self.local_snap_bar
+        if left != 0 && left == right {
+            return self.cache[left - 1].1;
+        }
+
+       0
     }
 }
-    
 
+/** 
+ * `&self` means the method takes an immutable reference.
+ * If you need a mutable reference, change it to `&mut self` instead.
+ */
 impl SnapshotArray {
 
-    fn new(size: usize) -> Self {
+    fn new(length: i32) -> Self {
+        let length = length as usize;
+
         SnapshotArray {
             snap_indicator: 0,
-            size,
-            state: HashMap::with_capacity(size),
+            state: HashMap::with_capacity(length),
             history: HashMap::new()
         }
     }
-
+    
     fn set(&mut self, index: i32, val: i32) {
         let index = index as usize;
-        let _state = &mut self.state;
 
-        if let Some(snapshot) = _state.get_mut(&index) {
-            let _index = snapshot.local_snap_bar % snapshot.cache_size;
-            snapshot.cache[_index] = (self.snap_indicator, val);
+        if let Some(snapshot) = self.state.get_mut(&index) {
+
+            let _index: usize = snapshot.local_snap_bar;
+            if _index < snapshot.cache.len() {
+                snapshot.cache[_index] = (self.snap_indicator, val);
+            } else {
+                snapshot.cache.push((self.snap_indicator, val));
+            }
+
         } else {
-            let _snap_id = self.snap_indicator;
-            let _snap_size = self.size - self.snap_indicator;
+            let snapshot = Snapshot {
+                cache: vec![(self.snap_indicator, val)],
+                local_snap_bar: 0
+            };
 
-            let mut _cache = vec![(0,0); _snap_size];
-            _cache[0] = (_snap_id, val);
-
-            self.state.entry(index).or_insert(
-                Snapshot {
-                    cache: _cache,
-                    local_snap_bar: 0,
-                    cache_size: self.size - self.snap_indicator,
-                }
-            );
+            self.state.insert(index, snapshot);
         }
 
         if let Some(count) = self.history.get(&index) {
@@ -105,54 +86,42 @@ impl SnapshotArray {
         } 
     }
     
-    fn snap(&mut self) {
-        for (k, _) in self.history.iter() {
-            if let Some(snap) = self.state.get_mut(k) {
+    fn snap(&mut self) -> i32 {
+        for cahced_index in self.history.iter() {
+            if let Some(snap) = self.state.get_mut(cahced_index.0) {
                 snap.sync();
             }
         }
 
         self.snap_indicator += 1;
         self.history.clear();
+
+        (self.snap_indicator - 1) as i32
     }
     
+    
     fn get(&self, index: i32, snap_id: i32) -> i32 {
-        todo!()
+        let index = index as usize;
+        let snap_id = snap_id as usize;
+        
+        if let Some(snap) = self.state.get(&index) {
+            return snap.binary_search(snap_id);
+        }
+
+        0
     }
 }
 
 
-
 fn main() {
-    let mut snapshot_arr = SnapshotArray::new(3); // set the length to be 3
-    // snapshot_arr.set(0, 5);
-    // snapshot_arr.set(0, 5);
-    // snapshot_arr.set(0, 5);
-    snapshot_arr.set(1, 5);
-    snapshot_arr.snap();
-    snapshot_arr.snap();
-    snapshot_arr.snap();
-    snapshot_arr.snap();
-    snapshot_arr.snap();
-    
-    snapshot_arr.set(1, 6);
-    snapshot_arr.snap();
-    snapshot_arr.snap();
-    snapshot_arr.snap();
-    snapshot_arr.snap();
-    snapshot_arr.snap();
+    let mut snapshot_arr = SnapshotArray::new(2); // set the length to be 3
 
-    snapshot_arr.set(1, 600);
+    snapshot_arr.snap();
+    snapshot_arr.set(0, 15);
+
+    snapshot_arr.get(1, 0);
+    snapshot_arr.get(0, 0);
 
     println!("{:?}", snapshot_arr);
-    // let snap_id = snapshotArr.snap();  // Take a snapshot, return snap_id = 0
-
-
-    // println!("snap_id: {:?}", snap_id);
-
-    // snapshotArr.set(0,6);
-    // let result = snapshotArr.get(0,0);  // Get the value of array[0] with snap_id = 0, return 5
-
-
-    // println!("Result: {:?}", result);
+    println!("get {:?}", snapshot_arr.get(0, 3));
 }

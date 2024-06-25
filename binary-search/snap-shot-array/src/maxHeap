@@ -1,0 +1,42 @@
+
+trait TreeHelper {
+    fn get_left_child(index: usize) -> usize { (2 * index) + 1 }
+    fn get_right_child(index: usize) -> usize { (2 * index) + 2 }
+    fn get_parent(index: usize) -> usize { (index - 1) / 2 }
+}
+
+trait CustomMinHeap {
+    fn heapify_up(&mut self, index: usize);
+    fn swap(&mut self, index_a: usize, index_b: usize);
+
+    fn has_left(&self, index: usize) -> bool;
+    fn has_right(&self, index: usize) -> bool;
+}
+
+impl CustomMinHeap for Snapshot {
+    fn heapify_up(&mut self, index: usize) {
+        if index != 0 {
+            let parent = Self::get_parent(index);
+            if self.cache[parent].0 < self.cache[index].0 {
+                self.swap(parent, index);
+                self.heapify_up(parent);
+            }
+        }
+    }
+
+    fn swap(&mut self, index_a: usize, index_b: usize) {
+        let temp = self.cache[index_a];
+        self.cache[index_a] = self.cache[index_b];
+        self.cache[index_b] = temp;
+    }
+    
+    fn has_left(&self, index: usize) -> bool {
+        Self::get_left_child(index) < self.local_snap_bar
+    }
+    
+    fn has_right(&self, index: usize) -> bool {
+        Self::get_right_child(index) < self.local_snap_bar
+    }
+}
+
+impl TreeHelper for Snapshot {}
